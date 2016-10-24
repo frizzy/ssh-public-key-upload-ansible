@@ -1,0 +1,20 @@
+---
+
+- hosts: ssh-key
+  vars:
+    key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
+  tasks:
+    - local_action:
+        module: known_hosts
+        name: "{{ inventory_hostname }}"
+        state: absent
+    - authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ lookup('file', key_file) }}"
+    - local_action: "shell ssh-keyscan -t ecdsa-sha2-nistp256 {{ inventory_hostname }}"
+      register: known_host_key
+    - local_action:
+        module: known_hosts
+        name: "{{ inventory_hostname }}"
+        key: "{{ known_host_key.stdout }}"
+        state: present
